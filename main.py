@@ -4,6 +4,7 @@ Pygame! combining asteroids with space invaders
 '''
 import pygame
 import math
+from Laser import Laser
 
 pygame.init()  # initialize modules
 clock = pygame.time.Clock()  # create clock object
@@ -17,6 +18,10 @@ jet = pygame.image.load(jet).convert_alpha()
 jet_width, jet_height = jet.get_size()
 jet_rect = jet.get_rect()
 center_w, center_h = jet_width // 2, jet_height // 2  # how many pixels to center of jet image
+
+lasers = []
+laser = "lasers.png"
+laser = pygame.image.load(laser).convert_alpha()
 
 
 # jet initial position
@@ -47,7 +52,6 @@ def jetMovement(x_speed, y_speed):
     elif jet_rect.right >= screen_width:
         jet_rect.right = screen_width
 
-
 def game():
     x_speed, y_speed = 0, 0
     run = True
@@ -75,9 +79,20 @@ def game():
                     x_speed += 5
                 if event.key == pygame.K_d:
                     x_speed -= 5
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # left-click
+                x_mouse, y_mouse = pygame.mouse.get_pos()
+                x_center, y_center = jet_rect.x + center_w, jet_rect.y + center_h
+                dx, dy = x_mouse - x_center, y_mouse - y_center
+                angle = math.degrees(math.atan2(-dy, dx))
+                rotated_laser = pygame.transform.rotate(laser, angle+90)
+                rotated_laser_rect = rotated_laser.get_rect(center=jet_rect.center)
+                lasers.append(Laser(x_center, y_center, angle, rotated_laser, rotated_laser_rect))
 
         jetMovement(x_speed, y_speed)
         rotateJet(jet_rect.x + center_w, jet_rect.y + center_h)
+        for l in lasers:
+            l.move()
+            screen.blit(l.laser, l.laser_rect)
 
         pygame.display.flip()  # update window
         clock.tick(60)  # 60 fps
