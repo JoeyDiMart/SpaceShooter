@@ -16,6 +16,7 @@ BG_COLOR = pygame.Color(10, 10, 10)  # bg color
 jet = "yellow_jet.png"  # Replace with the path to your JPG
 jet = pygame.image.load(jet).convert_alpha()
 jet_width, jet_height = jet.get_size()
+jet_clone = jet.copy()
 jet_rect = jet.get_rect()
 center_w, center_h = jet_width // 2, jet_height // 2  # how many pixels to center of jet image
 
@@ -30,6 +31,19 @@ jet_rect.topleft = x_position, y_position
 
 screen.blit(jet, (x_position, y_position))  # initial jet on screen
 
+lives = 3
+score = 0
+heart_icon = pygame.image.load("heart.png")
+score_font = pygame.font.Font("ARCADECLASSIC.TTF", 20)
+
+def HUD(lives, score):
+    heart_pos = 20
+    for i in range(lives):
+        screen.blit(heart_icon, (heart_pos, screen_height-60))
+        heart_pos += 70
+    score_render = score_font.render(str(score), True, (255, 255, 255))
+    screen.blit(score_render, (20, 10))
+
 
 # Subroutines for game logic
 def rotateJet(x_center, y_center):
@@ -40,17 +54,18 @@ def rotateJet(x_center, y_center):
     rotated_rect = rotated_jet.get_rect(center=jet_rect.center)
     return screen.blit(rotated_jet, rotated_rect.topleft)
 
+
 def jetMovement(x_speed, y_speed):
     jet_rect.y += y_speed
     jet_rect.x += x_speed
     if jet_rect.top <= 0:
-        jet_rect.top = 0
-    elif jet_rect.bottom >= screen_height:
         jet_rect.bottom = screen_height
+    elif jet_rect.bottom >= screen_height:
+        jet_rect.top = 0
     if jet_rect.left <= 0:
-        jet_rect.left = 0
-    elif jet_rect.right >= screen_width:
         jet_rect.right = screen_width
+    elif jet_rect.right >= screen_width:
+        jet_rect.left = 0
 
 def game():
     x_speed, y_speed = 0, 0
@@ -94,6 +109,7 @@ def game():
             l.move()
             screen.blit(l.laser, l.laser_rect)
 
+        HUD(lives, score)
         pygame.display.flip()  # update window
         clock.tick(60)  # 60 fps
 
