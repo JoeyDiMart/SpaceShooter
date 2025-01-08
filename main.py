@@ -4,7 +4,9 @@ Pygame! combining asteroids with space invaders
 '''
 import pygame
 import math
+import random
 from Laser import Laser
+from Eye import Eye
 
 pygame.init()  # initialize modules
 clock = pygame.time.Clock()  # create clock object
@@ -12,6 +14,11 @@ screen_width, screen_height = pygame.display.Info().current_w, pygame.display.In
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)  # can change size
 pygame.display.set_caption('Space Game')  # title
 BG_COLOR = pygame.Color(10, 10, 10)  # bg color
+#frame_counter = 0
+
+# Cursor
+custom_cursor = pygame.image.load("cursor.png").convert_alpha()
+pygame.mouse.set_visible(False)
 
 jet = "yellow_jet.png"  # Replace with the path to your JPG
 jet = pygame.image.load(jet).convert_alpha()
@@ -31,10 +38,19 @@ jet_rect.topleft = x_position, y_position
 
 screen.blit(jet, (x_position, y_position))  # initial jet on screen
 
+# HUD
 lives = 3
 score = 0
 heart_icon = pygame.image.load("heart.png")
 score_font = pygame.font.Font("ARCADECLASSIC.TTF", 20)
+
+# Enemy spawning
+eye_list = []
+eye = "eyes/eye0.png"
+eye = pygame.image.load(eye).convert_alpha()
+spawn_time = 80  # time in ms for each spawn
+eye_rect = eye.get_rect()
+
 
 def HUD(lives, score):
     heart_pos = 20
@@ -43,16 +59,44 @@ def HUD(lives, score):
         heart_pos += 70
     score_render = score_font.render(str(score), True, (255, 255, 255))
     screen.blit(score_render, (20, 10))
+    return
 
 
 # Subroutines for game logic
-def rotateJet(x_center, y_center):
-    x_mouse, y_mouse = pygame.mouse.get_pos()
+def rotateJet(x_center, y_center, x_mouse, y_mouse):
     dx, dy = x_center - x_mouse, y_center - y_mouse
     angle = math.degrees(math.atan2(-dy, dx)) + 90
     rotated_jet = pygame.transform.rotate(jet, angle)
     rotated_rect = rotated_jet.get_rect(center=jet_rect.center)
     return screen.blit(rotated_jet, rotated_rect.topleft)
+
+
+def makeLaser():
+    x_mouse, y_mouse = pygame.mouse.get_pos()
+    x_center, y_center = jet_rect.x + center_w, jet_rect.y + center_h
+    dx, dy = x_mouse - x_center, y_mouse - y_center
+    angle = math.degrees(math.atan2(-dy, dx))
+    rotated_laser = pygame.transform.rotate(laser, angle + 90)
+    rotated_laser_rect = rotated_laser.get_rect(center=jet_rect.center)
+    lasers.append(Laser(x_center, y_center, angle, rotated_laser, rotated_laser_rect))
+    return
+
+
+def spawnEye(jet_x, jet_y):
+    eye_x, eye_y = -20, -20
+    wall = random.randint(1, 4)
+    if wall % 2 == 0:
+        eye_x = random.randint(0, screen_width)
+        if wall == 4:
+            eye_y = screen_height + 20
+    else:
+        eye_y = random.randint(0, screen_height)
+        if wall == 3:
+            eye_x = screen_width + 20
+
+
+    #eye_list.append(Eye(eye_x, eye_y, angle, eye, eye_rect,2))
+    return
 
 
 def jetMovement(x_speed, y_speed):
@@ -66,12 +110,17 @@ def jetMovement(x_speed, y_speed):
         jet_rect.right = screen_width
     elif jet_rect.right >= screen_width:
         jet_rect.left = 0
+    return
 
-def game():
+
+def game(frame_counter=0):
     x_speed, y_speed = 0, 0
     run = True
     while run:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        frame_counter += 1
         screen.fill(BG_COLOR)
+        screen.blit(custom_cursor, (mouse_x, mouse_y))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # check for X out of game
@@ -95,16 +144,14 @@ def game():
                 if event.key == pygame.K_d:
                     x_speed -= 5
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # left-click
-                x_mouse, y_mouse = pygame.mouse.get_pos()
-                x_center, y_center = jet_rect.x + center_w, jet_rect.y + center_h
-                dx, dy = x_mouse - x_center, y_mouse - y_center
-                angle = math.degrees(math.atan2(-dy, dx))
-                rotated_laser = pygame.transform.rotate(laser, angle+90)
-                rotated_laser_rect = rotated_laser.get_rect(center=jet_rect.center)
-                lasers.append(Laser(x_center, y_center, angle, rotated_laser, rotated_laser_rect))
+                makeLaser()
+
+        if frame_counter % spawn_time == 0:
+            spawnEye(jet_rect.x, jet_rect.y)
 
         jetMovement(x_speed, y_speed)
-        rotateJet(jet_rect.x + center_w, jet_rect.y + center_h)
+        rotateJet(jet_rect.x + center_w, jet_rect.y + center_h, mouse_x, mouse_y)
+        
         for l in lasers:
             l.move()
             screen.blit(l.laser, l.laser_rect)
