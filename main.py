@@ -18,6 +18,8 @@ BG_COLOR = pygame.Color(10, 10, 10)  # bg color
 
 # Cursor
 custom_cursor = pygame.image.load("cursor.png").convert_alpha()
+cursor_rect = custom_cursor.get_rect()
+cursor_offset = (-cursor_rect.width // 2, -cursor_rect.height // 2)
 pygame.mouse.set_visible(False)
 
 jet = "yellow_jet.png"  # Replace with the path to your JPG
@@ -46,10 +48,10 @@ score_font = pygame.font.Font("ARCADECLASSIC.TTF", 20)
 
 # Enemy spawning
 eye_list = []
-eye = "eyes/eye0.png"
-eye = pygame.image.load(eye).convert_alpha()
+#eye_frames = [pygame.image.load("eyes/eye0.png").convert_alpha(), pygame.image.load("eyes/eye1.png").convert_alpha(),
+#              pygame.image.load("eyes/eye3.png").convert_alpha()]
+eye = pygame.image.load("eyes/eye0.png").convert_alpha()
 spawn_time = 80  # time in ms for each spawn
-eye_rect = eye.get_rect()
 
 
 def HUD(lives, score):
@@ -94,8 +96,13 @@ def spawnEye(jet_x, jet_y):
         if wall == 3:
             eye_x = screen_width + 20
 
-
-    #eye_list.append(Eye(eye_x, eye_y, angle, eye, eye_rect,2))
+    eye_rect = eye.get_rect()
+    eye_rect.x, eye_rect.y = eye_x, eye_y
+    dx, dy = jet_x - eye_x, jet_y - eye_y
+    angle = math.degrees(math.atan2(-dy, dx))
+    rotated_eye = pygame.transform.rotate(eye, angle)
+    eye_rect = rotated_eye.get_rect(center=eye_rect.center)
+    eye_list.append(Eye(angle, rotated_eye, eye_rect, 2))
     return
 
 
@@ -120,7 +127,7 @@ def game(frame_counter=0):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         frame_counter += 1
         screen.fill(BG_COLOR)
-        screen.blit(custom_cursor, (mouse_x, mouse_y))
+        screen.blit(custom_cursor, (mouse_x + cursor_offset[0], mouse_y + cursor_offset[1]))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # check for X out of game
@@ -151,10 +158,18 @@ def game(frame_counter=0):
 
         jetMovement(x_speed, y_speed)
         rotateJet(jet_rect.x + center_w, jet_rect.y + center_h, mouse_x, mouse_y)
-        
+
         for l in lasers:
             l.move()
             screen.blit(l.laser, l.laser_rect)
+        for e in eye_list:
+            e.move()
+            screen.blit(e.eye, e.eye_rect)
+            if ((e.eye_rect.x > screen_width + 30) or (e.eye_rect.x < -200) or
+                (e.eye_rect.y > screen_height + 30) or (e.eye_rect.y < -200)):
+                e.delete()
+                eye_list.remove(e)
+
 
         HUD(lives, score)
         pygame.display.flip()  # update window
