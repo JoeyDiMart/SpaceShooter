@@ -28,3 +28,7 @@ class Eye:
 
     def delete(self):
         self.angle = self.speed = self.dx = self.dy = self.eye = self.eye_rect = self.health = None
+
+    def loseHealth(self):
+        self.health -= 1
+

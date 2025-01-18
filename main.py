@@ -41,8 +41,8 @@ jet_rect.topleft = x_position, y_position
 screen.blit(jet, (x_position, y_position))  # initial jet on screen
 
 # HUD
-lives = 3
-score = 0
+#lives = 3
+#score = 0
 heart_icon = pygame.image.load("heart.png")
 score_font = pygame.font.Font("ARCADECLASSIC.TTF", 20)
 
@@ -120,7 +120,7 @@ def jetMovement(x_speed, y_speed):
     return
 
 
-def game(frame_counter=0):
+def game(frame_counter=0, score=0, lives=3):
     x_speed, y_speed = 0, 0
     run = True
     while run:
@@ -162,6 +162,13 @@ def game(frame_counter=0):
         for l in lasers:
             l.move()
             screen.blit(l.laser, l.laser_rect)
+            for i in eye_list:
+                if l.laser_rect.colliderect(i.eye_rect):
+                    i.loseHealth()
+                    l.delete()
+                    lasers.remove(l)
+                    break
+
         for e in eye_list:
             e.move()
             screen.blit(e.eye, e.eye_rect)
@@ -169,6 +176,10 @@ def game(frame_counter=0):
                 (e.eye_rect.y > screen_height + 30) or (e.eye_rect.y < -200)):
                 e.delete()
                 eye_list.remove(e)
+            elif e.health < 1:
+                e.delete()
+                eye_list.remove(e)
+                score += 100
 
 
         HUD(lives, score)

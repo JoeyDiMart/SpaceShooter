@@ -19,4 +19,9 @@ class Laser:
         self.laser_rect.x += self.dx
         self.laser_rect.y -= self.dy
 
+    def delete(self):
+        self.x = self.y = self.angle = self.speed = self.dx = self.dy = self.laser = self.laser_rect = None
+
+
+
 
